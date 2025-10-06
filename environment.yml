@@ -1,0 +1,13 @@
+name: creditcard-fraud-detection
+dependencies:
+  - python=3.10
+  - numpy
+  - pandas
+  - seaborn
+  - matplotlib
+  - scikit-learn
+  - imbalanced-learn
+  - xgboost
+  - lightgbm
+  - catboost
+  - scipy
