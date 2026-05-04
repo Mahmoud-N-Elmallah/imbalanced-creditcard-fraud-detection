@@ -128,6 +128,58 @@ Reports/experiments/<variant>/
 - Duplicate handling: exact duplicate rows removed before split
 - Rolling amount mean: disabled by default because random split makes production semantics ambiguous
 
+## Results
+
+The best completed experiment is `random_forest_smote`, promoted in MLflow as model version `4` under the `champion` alias. It was selected by `test_pr_auc`, the primary metric for this project.
+
+The test set contains 85,118 transactions after duplicate removal:
+
+- Legitimate transactions: 84,976
+- Fraudulent transactions: 142
+
+### Why PR-AUC Is the Champion Metric
+
+This dataset is extremely imbalanced, so accuracy and ROC-AUC can look strong even when fraud detection is weak. PR-AUC focuses on the positive class by measuring precision-recall tradeoff across thresholds. That makes it better aligned with fraud detection, where the model must rank rare fraud cases highly without flooding the review queue with false positives.
+
+ROC-AUC is still reported because it measures general ranking quality across both classes, but it is not the promotion metric. Fraud precision, fraud recall, fraud F1, and the confusion matrix are used to understand operating-threshold behavior.
+
+### Experiment Comparison
+
+| Experiment | Test PR-AUC | Test ROC-AUC | Fraud Precision | Fraud Recall | Fraud F1 | Macro F1 |
+|---|---:|---:|---:|---:|---:|---:|
+| `random_forest_smote` | **0.8352** | **0.9818** | 0.9083 | 0.7676 | **0.8321** | **0.9159** |
+| `xgboost_none` | 0.8155 | 0.9737 | **0.9381** | 0.7465 | 0.8314 | 0.9156 |
+| `xgboost_borderline_smote` | 0.8039 | 0.9604 | 0.7244 | 0.7958 | 0.7584 | 0.8790 |
+| `xgboost_smote` | 0.7915 | 0.9701 | 0.2719 | 0.8521 | 0.4123 | 0.7051 |
+| `lightgbm_smote` | 0.7860 | 0.9615 | 0.7887 | 0.7887 | 0.7887 | 0.8942 |
+| `logistic_regression_none` | 0.6858 | 0.9619 | 0.0529 | **0.8873** | 0.0998 | 0.5431 |
+
+### Champion Classification Report
+
+`random_forest_smote` gives the strongest balance between fraud precision and recall. It catches 109 of 142 fraud cases while producing only 11 false positives.
+
+| Class | Precision | Recall | F1-score | Support |
+|---|---:|---:|---:|---:|
+| Legitimate (`0`) | 0.9996 | 0.9999 | 0.9997 | 84,976 |
+| Fraud (`1`) | 0.9083 | 0.7676 | 0.8321 | 142 |
+| Macro avg | 0.9540 | 0.8837 | 0.9159 | 85,118 |
+| Weighted avg | 0.9995 | 0.9995 | 0.9995 | 85,118 |
+
+Confusion matrix:
+
+|  | Predicted legitimate | Predicted fraud |
+|---|---:|---:|
+| Actual legitimate | 84,965 | 11 |
+| Actual fraud | 33 | 109 |
+
+### Champion Curves
+
+![Precision-recall curve](Docs/results/random_forest_smote/precision_recall_curve.png)
+
+![ROC curve](Docs/results/random_forest_smote/roc_curve.png)
+
+![Confusion matrix](Docs/results/random_forest_smote/confusion_matrix.png)
+
 ## Verification
 
 ```powershell
