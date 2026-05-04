@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -58,13 +59,14 @@ def log_model_artifact(cfg: DictConfig, model: Any, input_example: pd.DataFrame)
     model_input = input_example.head(5).copy()
     predictions = score_vector(model, model_input)
     signature = infer_signature(model_input, predictions)
-    mlflow.sklearn.log_model(
+    os.environ.setdefault("MLFLOW_RECORD_ENV_VARS_IN_MODEL_LOGGING", "false")
+    model_info = mlflow.sklearn.log_model(
         sk_model=model,
-        artifact_path=str(cfg.mlflow.model_artifact_path),
+        name=str(cfg.mlflow.model_artifact_path),
         signature=signature,
         input_example=model_input,
     )
-    return f"runs:/{mlflow.active_run().info.run_id}/{cfg.mlflow.model_artifact_path}"
+    return model_info.model_uri
 
 
 def log_report_artifacts(reports_dir: str | Path) -> None:
@@ -98,7 +100,12 @@ def _champion_metric(
     return float(metric) if metric is not None else None
 
 
-def promote_if_better(cfg: DictConfig, run_id: str, candidate_metric: float) -> dict[str, Any]:
+def promote_if_better(
+    cfg: DictConfig,
+    run_id: str,
+    candidate_metric: float,
+    model_uri: str,
+) -> dict[str, Any]:
     if not bool(cfg.mlflow.registry.enabled):
         return {"promoted": False, "reason": "registry_disabled"}
 
@@ -121,7 +128,6 @@ def promote_if_better(cfg: DictConfig, run_id: str, candidate_metric: float) -> 
     if not promote:
         return result
 
-    model_uri = f"runs:/{run_id}/{cfg.mlflow.model_artifact_path}"
     version = mlflow.register_model(model_uri=model_uri, name=model_name)
     client.set_registered_model_alias(model_name, alias, version.version)
     client.set_model_version_tag(model_name, version.version, metric_name, str(candidate_metric))

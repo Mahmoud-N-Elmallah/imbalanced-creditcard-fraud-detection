@@ -90,11 +90,11 @@ def evaluate_model(cfg: DictConfig) -> Path:
                 log_common_params(cfg)
             log_metrics(results["metrics"])
             mlflow.set_tag("pipeline_stage", "evaluate")
-            log_model_artifact(cfg, model, X_test)
+            model_uri = log_model_artifact(cfg, model, X_test)
             log_report_artifacts(reports_dir)
             metric_name = str(cfg.training.scoring.champion_metric)
             candidate_metric = float(results["metrics"][metric_name])
-            registry_result = promote_if_better(cfg, run.info.run_id, candidate_metric)
+            registry_result = promote_if_better(cfg, run.info.run_id, candidate_metric, model_uri)
 
     write_json(reports_dir / "model_registry.json", registry_result)
     LOGGER.info("Evaluated model on untouched test split.")
