@@ -1,0 +1,6 @@
+name: adasyn
+target: imblearn.over_sampling.ADASYN
+params:
+  sampling_strategy: minority
+  random_state: ${seed}
+  n_neighbors: 5

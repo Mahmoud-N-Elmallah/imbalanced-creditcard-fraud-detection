@@ -1,0 +1,83 @@
+defaults:
+  - sampler: smote
+  - model: xgboost
+  - _self_
+
+stage: all
+seed: 42
+target_column: Class
+
+project:
+  name: imbalanced-creditcard-fraud-detection
+  root: ${hydra:runtime.cwd}
+
+paths:
+  raw_dir: ${project.root}/Data/raw
+  raw_data: ${paths.raw_dir}/creditcard.csv
+  legacy_data: ${project.root}/Data/creditcard.csv
+  intermediate_dir: ${project.root}/Data/intermediate
+  intermediate_train: ${paths.intermediate_dir}/train.csv
+  intermediate_test: ${paths.intermediate_dir}/test.csv
+  final_dir: ${project.root}/Data/final
+  final_train: ${paths.final_dir}/train.csv
+  final_test: ${paths.final_dir}/test.csv
+  models_dir: ${project.root}/Models
+  model: ${paths.models_dir}/model.pkl
+  reports_dir: ${project.root}/Reports
+  figures_dir: ${paths.reports_dir}/figures
+  artifacts_dir: ${project.root}/Artifacts
+  preprocessor: ${paths.artifacts_dir}/preprocessor.pkl
+
+data:
+  kaggle_dataset: mlg-ulb/creditcardfraud
+  raw_filename: creditcard.csv
+  split:
+    test_size: 0.3
+    stratify: true
+    shuffle: true
+    drop_duplicates: true
+
+features:
+  log_time: true
+  log_amount: true
+  amount_per_unit_time: true
+  epsilon: 1.0e-9
+  scale: true
+  rolling_amount_mean:
+    enabled: false
+    window: 10
+  kmeans:
+    enabled: true
+    n_clusters: 10
+    feature_name: cluster
+
+training:
+  cv:
+    n_splits: 10
+    shuffle: true
+    n_jobs: -1
+  scoring:
+    champion_metric: test_pr_auc
+    min_delta: 0.0
+
+mlflow:
+  enabled: ${oc.env:MLFLOW_ENABLED,true}
+  tracking_uri: ${oc.env:MLFLOW_TRACKING_URI,https://dagshub.com/mahmoudelmalah85/imbalanced-creditcard-fraud-detection.mlflow}
+  experiment_name: credit-card-fraud-detection
+  run_name: ${model.name}-${sampler.name}
+  model_artifact_path: model
+  registry:
+    enabled: true
+    model_name: credit-card-fraud-detector
+    champion_alias: champion
+
+dvc:
+  remote_name: dagshub
+  remote_url: ${oc.env:DVC_REMOTE_URL,https://dagshub.com/mahmoudelmalah85/imbalanced-creditcard-fraud-detection.dvc}
+
+hydra:
+  job:
+    chdir: false
+  run:
+    dir: .
+  output_subdir: null

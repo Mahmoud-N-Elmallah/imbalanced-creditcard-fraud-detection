@@ -1,3 +1,28 @@
-# Add patterns of files dvc should ignore, which could improve
-# the performance. Learn more at
-# https://dvc.org/doc/user-guide/dvcignore
+# Keep DVC filesystem scans away from local-only environments, caches, and
+# experiment trackers. Do not ignore Data/, Models/, Reports/, or Artifacts/:
+# those are declared DVC stage outputs.
+
+.git/
+.venv/
+.env
+.env.*
+kaggle.json
+.kaggle/
+
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+mlruns/
+outputs/
+multirun/
+*.log
+
+build/
+dist/
+*.egg-info/

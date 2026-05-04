@@ -1,0 +1,6 @@
+name: kmeans_smote
+target: imblearn.over_sampling.KMeansSMOTE
+params:
+  sampling_strategy: minority
+  random_state: ${seed}
+  cluster_balance_threshold: 0.0025

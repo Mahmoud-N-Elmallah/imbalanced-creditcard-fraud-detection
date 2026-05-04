@@ -1,0 +1,249 @@
+stages:
+  download:
+    cmd: python main.py stage=download
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+    outs:
+      - Data/raw/creditcard.csv
+
+  split:
+    cmd: python main.py stage=split
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/raw/creditcard.csv
+    outs:
+      - Data/intermediate/train.csv
+      - Data/intermediate/test.csv
+    metrics:
+      - Reports/data_split.json:
+          cache: false
+
+  features:
+    cmd: python main.py stage=features
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/intermediate/train.csv
+      - Data/intermediate/test.csv
+    outs:
+      - Data/final/train.csv
+      - Data/final/test.csv
+      - Artifacts/preprocessor.pkl
+    metrics:
+      - Reports/features.json:
+          cache: false
+
+  train_xgboost_smote:
+    cmd: python main.py stage=train model=xgboost sampler=smote mlflow.run_name=xgboost-smote paths.model=Models/experiments/xgboost_smote/model.pkl paths.reports_dir=Reports/experiments/xgboost_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/intermediate/train.csv
+    outs:
+      - Models/experiments/xgboost_smote/model.pkl
+      - Reports/experiments/xgboost_smote/mlflow_run.json:
+          cache: false
+    metrics:
+      - Reports/experiments/xgboost_smote/cv_metrics.json:
+          cache: false
+      - Reports/experiments/xgboost_smote/train_metrics.json:
+          cache: false
+
+  evaluate_xgboost_smote:
+    cmd: python main.py stage=evaluate model=xgboost sampler=smote mlflow.run_name=xgboost-smote paths.model=Models/experiments/xgboost_smote/model.pkl paths.reports_dir=Reports/experiments/xgboost_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Models/experiments/xgboost_smote/model.pkl
+      - Reports/experiments/xgboost_smote/mlflow_run.json
+      - Data/intermediate/test.csv
+    outs:
+      - Reports/experiments/xgboost_smote/figures
+      - Reports/experiments/xgboost_smote/classification_report.json
+      - Reports/experiments/xgboost_smote/confusion_matrix.json
+      - Reports/experiments/xgboost_smote/model_registry.json
+    metrics:
+      - Reports/experiments/xgboost_smote/test_metrics.json:
+          cache: false
+
+  train_xgboost_borderline_smote:
+    cmd: python main.py stage=train model=xgboost sampler=borderline_smote mlflow.run_name=xgboost-borderline-smote paths.model=Models/experiments/xgboost_borderline_smote/model.pkl paths.reports_dir=Reports/experiments/xgboost_borderline_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/intermediate/train.csv
+    outs:
+      - Models/experiments/xgboost_borderline_smote/model.pkl
+      - Reports/experiments/xgboost_borderline_smote/mlflow_run.json:
+          cache: false
+    metrics:
+      - Reports/experiments/xgboost_borderline_smote/cv_metrics.json:
+          cache: false
+      - Reports/experiments/xgboost_borderline_smote/train_metrics.json:
+          cache: false
+
+  evaluate_xgboost_borderline_smote:
+    cmd: python main.py stage=evaluate model=xgboost sampler=borderline_smote mlflow.run_name=xgboost-borderline-smote paths.model=Models/experiments/xgboost_borderline_smote/model.pkl paths.reports_dir=Reports/experiments/xgboost_borderline_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Models/experiments/xgboost_borderline_smote/model.pkl
+      - Reports/experiments/xgboost_borderline_smote/mlflow_run.json
+      - Data/intermediate/test.csv
+    outs:
+      - Reports/experiments/xgboost_borderline_smote/figures
+      - Reports/experiments/xgboost_borderline_smote/classification_report.json
+      - Reports/experiments/xgboost_borderline_smote/confusion_matrix.json
+      - Reports/experiments/xgboost_borderline_smote/model_registry.json
+    metrics:
+      - Reports/experiments/xgboost_borderline_smote/test_metrics.json:
+          cache: false
+
+  train_xgboost_none:
+    cmd: python main.py stage=train model=xgboost sampler=none mlflow.run_name=xgboost-none paths.model=Models/experiments/xgboost_none/model.pkl paths.reports_dir=Reports/experiments/xgboost_none
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/intermediate/train.csv
+    outs:
+      - Models/experiments/xgboost_none/model.pkl
+      - Reports/experiments/xgboost_none/mlflow_run.json:
+          cache: false
+    metrics:
+      - Reports/experiments/xgboost_none/cv_metrics.json:
+          cache: false
+      - Reports/experiments/xgboost_none/train_metrics.json:
+          cache: false
+
+  evaluate_xgboost_none:
+    cmd: python main.py stage=evaluate model=xgboost sampler=none mlflow.run_name=xgboost-none paths.model=Models/experiments/xgboost_none/model.pkl paths.reports_dir=Reports/experiments/xgboost_none
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Models/experiments/xgboost_none/model.pkl
+      - Reports/experiments/xgboost_none/mlflow_run.json
+      - Data/intermediate/test.csv
+    outs:
+      - Reports/experiments/xgboost_none/figures
+      - Reports/experiments/xgboost_none/classification_report.json
+      - Reports/experiments/xgboost_none/confusion_matrix.json
+      - Reports/experiments/xgboost_none/model_registry.json
+    metrics:
+      - Reports/experiments/xgboost_none/test_metrics.json:
+          cache: false
+
+  train_lightgbm_smote:
+    cmd: python main.py stage=train model=lightgbm sampler=smote mlflow.run_name=lightgbm-smote paths.model=Models/experiments/lightgbm_smote/model.pkl paths.reports_dir=Reports/experiments/lightgbm_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/intermediate/train.csv
+    outs:
+      - Models/experiments/lightgbm_smote/model.pkl
+      - Reports/experiments/lightgbm_smote/mlflow_run.json:
+          cache: false
+    metrics:
+      - Reports/experiments/lightgbm_smote/cv_metrics.json:
+          cache: false
+      - Reports/experiments/lightgbm_smote/train_metrics.json:
+          cache: false
+
+  evaluate_lightgbm_smote:
+    cmd: python main.py stage=evaluate model=lightgbm sampler=smote mlflow.run_name=lightgbm-smote paths.model=Models/experiments/lightgbm_smote/model.pkl paths.reports_dir=Reports/experiments/lightgbm_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Models/experiments/lightgbm_smote/model.pkl
+      - Reports/experiments/lightgbm_smote/mlflow_run.json
+      - Data/intermediate/test.csv
+    outs:
+      - Reports/experiments/lightgbm_smote/figures
+      - Reports/experiments/lightgbm_smote/classification_report.json
+      - Reports/experiments/lightgbm_smote/confusion_matrix.json
+      - Reports/experiments/lightgbm_smote/model_registry.json
+    metrics:
+      - Reports/experiments/lightgbm_smote/test_metrics.json:
+          cache: false
+
+  train_random_forest_smote:
+    cmd: python main.py stage=train model=random_forest sampler=smote mlflow.run_name=random-forest-smote paths.model=Models/experiments/random_forest_smote/model.pkl paths.reports_dir=Reports/experiments/random_forest_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/intermediate/train.csv
+    outs:
+      - Models/experiments/random_forest_smote/model.pkl
+      - Reports/experiments/random_forest_smote/mlflow_run.json:
+          cache: false
+    metrics:
+      - Reports/experiments/random_forest_smote/cv_metrics.json:
+          cache: false
+      - Reports/experiments/random_forest_smote/train_metrics.json:
+          cache: false
+
+  evaluate_random_forest_smote:
+    cmd: python main.py stage=evaluate model=random_forest sampler=smote mlflow.run_name=random-forest-smote paths.model=Models/experiments/random_forest_smote/model.pkl paths.reports_dir=Reports/experiments/random_forest_smote
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Models/experiments/random_forest_smote/model.pkl
+      - Reports/experiments/random_forest_smote/mlflow_run.json
+      - Data/intermediate/test.csv
+    outs:
+      - Reports/experiments/random_forest_smote/figures
+      - Reports/experiments/random_forest_smote/classification_report.json
+      - Reports/experiments/random_forest_smote/confusion_matrix.json
+      - Reports/experiments/random_forest_smote/model_registry.json
+    metrics:
+      - Reports/experiments/random_forest_smote/test_metrics.json:
+          cache: false
+
+  train_logistic_regression_none:
+    cmd: python main.py stage=train model=logistic_regression sampler=none mlflow.run_name=logistic-regression-none paths.model=Models/experiments/logistic_regression_none/model.pkl paths.reports_dir=Reports/experiments/logistic_regression_none
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Data/intermediate/train.csv
+    outs:
+      - Models/experiments/logistic_regression_none/model.pkl
+      - Reports/experiments/logistic_regression_none/mlflow_run.json:
+          cache: false
+    metrics:
+      - Reports/experiments/logistic_regression_none/cv_metrics.json:
+          cache: false
+      - Reports/experiments/logistic_regression_none/train_metrics.json:
+          cache: false
+
+  evaluate_logistic_regression_none:
+    cmd: python main.py stage=evaluate model=logistic_regression sampler=none mlflow.run_name=logistic-regression-none paths.model=Models/experiments/logistic_regression_none/model.pkl paths.reports_dir=Reports/experiments/logistic_regression_none
+    deps:
+      - main.py
+      - Config
+      - Src/credit_fraud
+      - Models/experiments/logistic_regression_none/model.pkl
+      - Reports/experiments/logistic_regression_none/mlflow_run.json
+      - Data/intermediate/test.csv
+    outs:
+      - Reports/experiments/logistic_regression_none/figures
+      - Reports/experiments/logistic_regression_none/classification_report.json
+      - Reports/experiments/logistic_regression_none/confusion_matrix.json
+      - Reports/experiments/logistic_regression_none/model_registry.json
+    metrics:
+      - Reports/experiments/logistic_regression_none/test_metrics.json:
+          cache: false

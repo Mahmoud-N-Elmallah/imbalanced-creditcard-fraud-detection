@@ -1,0 +1,6 @@
+name: borderline_smote
+target: imblearn.over_sampling.BorderlineSMOTE
+params:
+  sampling_strategy: minority
+  random_state: ${seed}
+  k_neighbors: 5

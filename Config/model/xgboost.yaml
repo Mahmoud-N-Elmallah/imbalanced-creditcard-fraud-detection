@@ -1,0 +1,12 @@
+name: xgboost
+target: xgboost.XGBClassifier
+params:
+  n_estimators: 300
+  learning_rate: 0.05
+  max_depth: 4
+  subsample: 0.9
+  colsample_bytree: 0.9
+  eval_metric: logloss
+  tree_method: hist
+  random_state: ${seed}
+  n_jobs: -1

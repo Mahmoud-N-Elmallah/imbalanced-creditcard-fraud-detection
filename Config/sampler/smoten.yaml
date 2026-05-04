@@ -1,0 +1,6 @@
+name: smoten
+target: imblearn.over_sampling.SMOTEN
+params:
+  sampling_strategy: minority
+  random_state: ${seed}
+  k_neighbors: 5

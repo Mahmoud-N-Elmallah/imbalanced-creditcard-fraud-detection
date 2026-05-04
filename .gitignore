@@ -1,1 +1,40 @@
-Data/*
+Data/**
+!Data/
+!Data/raw/
+!Data/raw/.gitkeep
+!Data/intermediate/
+!Data/intermediate/.gitkeep
+!Data/final/
+!Data/final/.gitkeep
+
+# Local secrets and credentials
+.env
+.env.*
+!.env.example
+kaggle.json
+.kaggle/
+.venv
+# Pipeline outputs tracked by DVC or MLflow, not Git
+Models/
+Reports/
+Artifacts/
+mlruns/
+
+# Logs and Hydra outputs
+*.log
+outputs/
+multirun/
+
+# Python caches and test outputs
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Packaging/build outputs
+build/
+dist/
+*.egg-info/

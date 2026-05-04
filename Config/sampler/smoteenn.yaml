@@ -1,0 +1,5 @@
+name: smoteenn
+target: imblearn.combine.SMOTEENN
+params:
+  sampling_strategy: minority
+  random_state: ${seed}

@@ -1,0 +1,5 @@
+name: smotetomek
+target: imblearn.combine.SMOTETomek
+params:
+  sampling_strategy: minority
+  random_state: ${seed}

@@ -1,132 +1,136 @@
-# Credit Card Fraud Detection using Machine Learning
+# Credit Card Fraud Detection
 
-This project focuses on detecting fraudulent credit card transactions in a **highly imbalanced dataset** using advanced data preprocessing, sampling, and model tuning techniques.  
-The workflow demonstrates a full applied machine learning pipeline — from data cleaning and feature engineering to model evaluation.
+Leakage-safe, Hydra-configured machine learning pipeline for the Kaggle credit card fraud dataset.
 
----
+The original work is preserved in `Notebooks/fraud.ipynb`. The project now moves the workflow into modular Python code with explicit data boundaries, DVC stages, and MLflow/DagsHub tracking.
 
-##  Dataset
-The dataset used is `creditcard.csv` that can be found here "https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud" , which contains anonymized PCAed transaction data and a binary target column `Class`:
-- `0`: Legitimate transaction  
-- `1`: Fraudulent transaction  
-- The fraud class represents only **0.166%** of the total samples, making this a **severely imbalanced classification problem**.
+## What This Project Does
 
----
+- Downloads `mlg-ulb/creditcardfraud` from Kaggle only when raw data is missing.
+- Splits data into train/test before feature engineering.
+- Writes intermediate split data to `Data/intermediate`.
+- Fits preprocessing on train only, then transforms train/test into `Data/final`.
+- Trains configurable imbalanced-learning pipelines from Hydra config.
+- Tracks train/CV/test metrics with MLflow.
+- Promotes a new MLflow model version only when `test_pr_auc` beats current `champion`.
+- Defines DVC stages for download, split, features, train, and evaluate.
+- Serializes local Python objects as `.pkl`: `Artifacts/preprocessor.pkl` and `Models/model.pkl`.
 
-##  Data Preprocessing and Exploration
-- Checked for **missing values** and **duplicates**, then removed duplicates.
-- Explored data distributions using `seaborn` and `matplotlib` for both individual features and correlations with the target.
-- Noted that:
-  - `Amount` was **positively skewed**.
-  - `Time` needed **scaling**.
-- Applied **log transformation** to `Amount` and `Time`.
-- Created new features:
-  - `amount_per_unit_time` = `Amount / Time`
-  - `10_rolls_amount_mean` = rolling mean of the last 10 transaction amounts
-- Applied **KMeans clustering** (`n_clusters=10`) on the scaled features to add a new categorical feature `clusterd`, representing the assigned cluster label.
+## Project Layout
 
----
+```text
+Config/                 Hydra configs for paths, features, samplers, models, MLflow, DVC
+Data/raw/               Raw Kaggle CSV
+Data/intermediate/      Train/test split before feature engineering
+Data/final/             Train/test snapshots after train-fitted feature engineering
+Src/credit_fraud/       Modular pipeline package
+Notebooks/              Original exploratory notebook
+tests/                  Unit and smoke tests
+dvc.yaml                Reproducible pipeline stages
+main.py                 Hydra entrypoint
+```
 
-##  Feature Scaling
-Used **RobustScaler** to normalize features while minimizing the effect of outliers.
+## Setup
 
----
+```powershell
+uv sync
+Copy-Item .env.example .env
+```
 
-##  Handling Imbalanced Data
-Tested multiple **oversampling** and **undersampling** strategies from `imblearn`:
-- **Oversampling**: `SMOTE`, `BorderlineSMOTE`, `ADASYN`, `SMOTEN`, `SMOTEENN`, `SMOTETomek`, `KMeansSMOTE`
-- **Undersampling**: `AllKNN`, `RandomUnderSampler`, `ClusterCentroids`
+Fill `.env` with Kaggle and DagsHub credentials. `.env` is ignored by Git.
 
-The best-performing sampler was **SMOTEN**, which was selected for the final pipeline.
+The default DagsHub targets are:
 
----
+- MLflow: `https://dagshub.com/mahmoudelmalah85/imbalanced-creditcard-fraud-detection.mlflow`
+- DVC: `https://dagshub.com/mahmoudelmalah85/imbalanced-creditcard-fraud-detection.dvc`
 
-##  Model Selection
-The following classifiers were compared under the same SMOTEN oversampling setup:
-- `LogisticRegression`
-- `DecisionTreeClassifier`
-- `AdaBoostClassifier`
-- `GradientBoostingClassifier`
-- `RandomForestClassifier`
-- `SVC`
-- `XGBClassifier`
-- `LGBMClassifier`
+Configure DVC auth locally, not in committed files:
 
-Both **Random Forest** and **XGBoost** achieved strong results, but **XGBoost** was chosen due to ist training efficiency and ease of tuning on large datasets.
+```powershell
+.\.venv\Scripts\dvc.exe remote modify --local dagshub auth basic
+.\.venv\Scripts\dvc.exe remote modify --local dagshub user $env:DAGSHUB_USERNAME
+.\.venv\Scripts\dvc.exe remote modify --local dagshub password $env:DAGSHUB_TOKEN
+```
 
----
+## Run Pipeline
 
-##  Hyperparameter Tuning
-- Used **RandomizedSearchCV** with **StratifiedKFold (10 splits)** for robust cross-validation.
-- Parameter distribution (`xgb_param_dist`) included:
-  - `n_estimators`, `learning_rate`, `max_depth`, `subsample`, `colsample_bytree`, `gamma`, `reg_alpha`, `reg_lambda`, and `scale_pos_weight`.
-- The model was wrappped in an `imblearn` **Pipeline** combining:
-  1. `SMOTEN` oversampling  
-  2. `XGBClassifier`
+Run everything:
 
----
+```powershell
+python main.py stage=all
+```
 
-##  Train/Test Split
-- Used a **70/30** train–test split (`stratify=y`, `random_state=42`).
-- Cross-validation within RandomizedSearchCV handled the internal validation.
+Run one stage:
 
----
+```powershell
+python main.py stage=download
+python main.py stage=split
+python main.py stage=features
+python main.py stage=train
+python main.py stage=evaluate
+```
 
-##  Results
+Run without MLflow, useful before credentials are set:
 
-**Training Data:**
-| Metric | Value |
-|--------|--------|
-| Precision (fraud) | 0.99 |
-| Recall (fraud) | 1.00 |
-| F1 (fraud) | 0.99 |
-| Macro F1 | 1.00 |
+```powershell
+python main.py stage=train mlflow.enabled=false
+python main.py stage=evaluate mlflow.enabled=false
+```
 
-**Test Data (Unseen):**
-| Metric | Value |
-|--------|--------|
-| Precision (fraud) | 0.93 |
-| Recall (fraud) | 0.77 |
-| F1 (fraud) | 0.85 |
-| Macro F1 | 0.92 |
+Use another sampler or model:
 
-The model achieves a **macro F1-score of 0.92 on unseen data**, showing strong generalization adn effective handling of class imbalance.  
-The performance gap between training and test sets is realistic, indicating **no major overfitting**.
+```powershell
+python main.py stage=train sampler=borderline_smote model=random_forest
+python main.py stage=train sampler=none model=logistic_regression
+```
 
----
+Use DVC:
 
-##  Evaluation
-- `classification_report` for detailed metrics.
-- `ConfusionMatrixDisplay` and `RocCurveDisplay` to visualize performance.
-- `f1_macro` used as the primary scoring metric.
+```powershell
+.\.venv\Scripts\dvc.exe repro
+.\.venv\Scripts\dvc.exe push
+```
 
----
+`dvc repro` trains these isolated experiment variants and logs each one as a separate MLflow run:
 
-##  Key Techniques and Skills Demonstrated
-- Data cleaning and feature engineering
-- Handling extreme class imbalance using undersampling and oversampling techniques
-- Feature scaling 
-- Clustering with **KMeans** for feature enrichment
-- Cross-validation with **StratifiedKFold**
-- Model selection across multiple ML algorithms
-- Hyperparameter optimization using **RandomizedSearchCV**
-- Evaluation with ROC curve, confusion matrix, and F1 metrics
-- Integration of **imblearn pipelines** for balanced model training
+```text
+xgboost_smote
+xgboost_borderline_smote
+xgboost_none
+lightgbm_smote
+random_forest_smote
+logistic_regression_none
+```
 
----
+Each variant writes to its own local paths:
 
-##  Libraries Used
-- `numpy`, `pandas`, `matplotlib`, `seaborn`
-- `scikit-learn`
-- `imblearn`
-- `xgboost`, `lightgbm`, `catboost`
-- `scipy`
+```text
+Models/experiments/<variant>/model.pkl
+Reports/experiments/<variant>/
+```
 
----
+## Leakage Controls
 
-##  Final Remarks
-> The model performs strongly on an imbalanced dataset, achieving high precision and recall for the minority class.  
-> This project demonstrates end-to-end data science workflow — from exploration and feature engineering to sampling, model tuning, and evaluation.
+- Raw data is never transformed before split.
+- `Data/intermediate/train.csv` and `Data/intermediate/test.csv` are created before feature engineering.
+- Feature transformer fits `RobustScaler` and optional KMeans only on train data.
+- Model training uses an imblearn pipeline with feature engineering inside cross-validation.
+- Samplers are pipeline training steps, so they are not applied during test prediction.
+- Test metrics are computed once in `stage=evaluate` from untouched intermediate test data.
+- Local fitted objects are serialized with Python pickle using `.pkl` paths.
 
----
+## Current Defaults
 
+- Champion metric: `test_pr_auc`
+- Default model: XGBoost
+- Default sampler: SMOTE
+- Test size: 30%
+- Duplicate handling: exact duplicate rows removed before split
+- Rolling amount mean: disabled by default because random split makes production semantics ambiguous
+
+## Verification
+
+```powershell
+python -m pytest -q
+python -m ruff check main.py Src tests
+```

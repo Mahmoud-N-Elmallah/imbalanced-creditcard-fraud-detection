@@ -1,0 +1,6 @@
+name: smote
+target: imblearn.over_sampling.SMOTE
+params:
+  sampling_strategy: minority
+  random_state: ${seed}
+  k_neighbors: 5

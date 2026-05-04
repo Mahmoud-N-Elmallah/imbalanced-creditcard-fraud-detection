@@ -1,0 +1,5 @@
+name: cluster_centroids
+target: imblearn.under_sampling.ClusterCentroids
+params:
+  sampling_strategy: auto
+  random_state: ${seed}

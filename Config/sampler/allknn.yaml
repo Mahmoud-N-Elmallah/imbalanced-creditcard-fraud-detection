@@ -1,0 +1,4 @@
+name: allknn
+target: imblearn.under_sampling.AllKNN
+params:
+  sampling_strategy: auto
