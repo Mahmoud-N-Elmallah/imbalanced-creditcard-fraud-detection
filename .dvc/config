@@ -1,6 +1,6 @@
 [core]
-    remote = dagshub
+    remote = origin
 ['remote "dagshub"']
     url = https://dagshub.com/mahmoudelmalah85/imbalanced-creditcard-fraud-detection.dvc
 ['remote "origin"']
-    url = https://dagshub.com/mahmoudelmalah85/Home-Credit-Default-Risk-ML.dvc
+    url = https://dagshub.com/mahmoudelmalah85/imbalanced-creditcard-fraud-detection.dvc
