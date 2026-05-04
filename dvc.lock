@@ -1,0 +1,672 @@
+schema: '2.0'
+stages:
+  download:
+    cmd: python main.py stage=download
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Data/raw/creditcard.csv
+      hash: md5
+      md5: e90efcb83d69faf99fcab8b0255024de
+      size: 150828752
+  split:
+    cmd: python main.py stage=split
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/raw/creditcard.csv
+      hash: md5
+      md5: e90efcb83d69faf99fcab8b0255024de
+      size: 150828752
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Reports/data_split.json
+      hash: md5
+      md5: 3aa9cd6d70dc3a32a4c1ac26d27ad1cf
+      size: 412
+  features:
+    cmd: python main.py stage=features
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Artifacts/preprocessor.pkl
+      hash: md5
+      md5: a63355745bfbf04371e950d7b1fd0f30
+      size: 799118
+    - path: Data/final/test.csv
+      hash: md5
+      md5: 68abfb8b81e8cd237f3ccf5ef987850a
+      size: 52610853
+    - path: Data/final/train.csv
+      hash: md5
+      md5: d2ce0c6aa483c467050c32f7cd1f1374
+      size: 122760707
+    - path: Reports/features.json
+      hash: md5
+      md5: 05974de816810a50adeea4acab642935
+      size: 755
+  train_xgboost_smote:
+    cmd: python main.py stage=train model=xgboost sampler=smote 
+      mlflow.run_name=xgboost-smote 
+      paths.model=Models/experiments/xgboost_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/xgboost_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Models/experiments/xgboost_smote/model.pkl
+      hash: md5
+      md5: 5b3365e7f83da5b9872d73e4c8de386e
+      size: 1368728
+    - path: Reports/experiments/xgboost_smote/cv_metrics.json
+      hash: md5
+      md5: b54bba50e79eebac6b44336eef25c6dd
+      size: 443
+    - path: Reports/experiments/xgboost_smote/mlflow_run.json
+      hash: md5
+      md5: 7d4610cf670d2350d5559583cffc02f3
+      size: 187
+    - path: Reports/experiments/xgboost_smote/train_metrics.json
+      hash: md5
+      md5: ecfb1ccaf9ab6f75df2679d36aa6f231
+      size: 1133
+  evaluate_xgboost_smote:
+    cmd: python main.py stage=evaluate model=xgboost sampler=smote 
+      mlflow.run_name=xgboost-smote 
+      paths.model=Models/experiments/xgboost_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/xgboost_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Models/experiments/xgboost_smote/model.pkl
+      hash: md5
+      md5: 5b3365e7f83da5b9872d73e4c8de386e
+      size: 1368728
+    - path: Reports/experiments/xgboost_smote/mlflow_run.json
+      hash: md5
+      md5: 7d4610cf670d2350d5559583cffc02f3
+      size: 187
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Reports/experiments/xgboost_smote/classification_report.json
+      hash: md5
+      md5: 6b85a28d93f22cdf38839637d9a6b0ed
+      size: 625
+    - path: Reports/experiments/xgboost_smote/confusion_matrix.json
+      hash: md5
+      md5: e678ebbfde6b5d41d83cbd71c3eb1438
+      size: 99
+    - path: Reports/experiments/xgboost_smote/figures
+      hash: md5
+      md5: a1057dc9324ce263beea095d2451ba51.dir
+      size: 105121
+      nfiles: 3
+    - path: Reports/experiments/xgboost_smote/model_registry.json
+      hash: md5
+      md5: fca6d07951eac448bf6205f001784067
+      size: 225
+    - path: Reports/experiments/xgboost_smote/test_metrics.json
+      hash: md5
+      md5: 335e305eecb9d9121c04c9cc874e66a2
+      size: 282
+  train_xgboost_borderline_smote:
+    cmd: python main.py stage=train model=xgboost sampler=borderline_smote 
+      mlflow.run_name=xgboost-borderline-smote 
+      paths.model=Models/experiments/xgboost_borderline_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/xgboost_borderline_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Models/experiments/xgboost_borderline_smote/model.pkl
+      hash: md5
+      md5: 818d1702985b1ffc0fbfe2261a42d041
+      size: 52204342
+    - path: Reports/experiments/xgboost_borderline_smote/cv_metrics.json
+      hash: md5
+      md5: 1506b364b5d5141309bce03d62f028ae
+      size: 434
+    - path: Reports/experiments/xgboost_borderline_smote/mlflow_run.json
+      hash: md5
+      md5: ee5214849d5b1bf092ba18bbddfa0bdd
+      size: 187
+    - path: Reports/experiments/xgboost_borderline_smote/train_metrics.json
+      hash: md5
+      md5: eef036f7a2dd7b95d464b1c19addd8fc
+      size: 1128
+  evaluate_xgboost_borderline_smote:
+    cmd: python main.py stage=evaluate model=xgboost sampler=borderline_smote 
+      mlflow.run_name=xgboost-borderline-smote 
+      paths.model=Models/experiments/xgboost_borderline_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/xgboost_borderline_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Models/experiments/xgboost_borderline_smote/model.pkl
+      hash: md5
+      md5: 818d1702985b1ffc0fbfe2261a42d041
+      size: 52204342
+    - path: Reports/experiments/xgboost_borderline_smote/mlflow_run.json
+      hash: md5
+      md5: ee5214849d5b1bf092ba18bbddfa0bdd
+      size: 187
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: 
+        Reports/experiments/xgboost_borderline_smote/classification_report.json
+      hash: md5
+      md5: 5951321bf450291c6150b62760be304d
+      size: 627
+    - path: Reports/experiments/xgboost_borderline_smote/confusion_matrix.json
+      hash: md5
+      md5: b1b8727ffe68b1aa43983a6adc913a0d
+      size: 98
+    - path: Reports/experiments/xgboost_borderline_smote/figures
+      hash: md5
+      md5: 864c6c0d759f077d2fb9e1c69578aae0.dir
+      size: 105241
+      nfiles: 3
+    - path: Reports/experiments/xgboost_borderline_smote/model_registry.json
+      hash: md5
+      md5: 816dda4f033b0b5f33d8d4533c5bf31d
+      size: 239
+    - path: Reports/experiments/xgboost_borderline_smote/test_metrics.json
+      hash: md5
+      md5: 58ae18f76fe0f1e97f748374f9066e66
+      size: 282
+  train_xgboost_none:
+    cmd: python main.py stage=train model=xgboost sampler=none 
+      mlflow.run_name=xgboost-none 
+      paths.model=Models/experiments/xgboost_none/model.pkl 
+      paths.reports_dir=Reports/experiments/xgboost_none
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Models/experiments/xgboost_none/model.pkl
+      hash: md5
+      md5: 152615f878a5e9632cc9278466c4bd46
+      size: 1223002
+    - path: Reports/experiments/xgboost_none/cv_metrics.json
+      hash: md5
+      md5: 7ea4c2d116cc7b789891bbaa9897c550
+      size: 438
+    - path: Reports/experiments/xgboost_none/mlflow_run.json
+      hash: md5
+      md5: 75404d45da4aa98df70238c8d77e9630
+      size: 187
+    - path: Reports/experiments/xgboost_none/train_metrics.json
+      hash: md5
+      md5: 53f68f0a41b4cdd6a3aecaf9f82e9318
+      size: 1130
+  evaluate_xgboost_none:
+    cmd: python main.py stage=evaluate model=xgboost sampler=none 
+      mlflow.run_name=xgboost-none 
+      paths.model=Models/experiments/xgboost_none/model.pkl 
+      paths.reports_dir=Reports/experiments/xgboost_none
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Models/experiments/xgboost_none/model.pkl
+      hash: md5
+      md5: 152615f878a5e9632cc9278466c4bd46
+      size: 1223002
+    - path: Reports/experiments/xgboost_none/mlflow_run.json
+      hash: md5
+      md5: 75404d45da4aa98df70238c8d77e9630
+      size: 187
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Reports/experiments/xgboost_none/classification_report.json
+      hash: md5
+      md5: 8d88b5a16b8dbaa40fc07d1a9c544349
+      size: 629
+    - path: Reports/experiments/xgboost_none/confusion_matrix.json
+      hash: md5
+      md5: 4bfe9edc85e5a4c84b064bbf9aceec0b
+      size: 97
+    - path: Reports/experiments/xgboost_none/figures
+      hash: md5
+      md5: 1498ff66986d428c743a08d868a98688.dir
+      size: 104678
+      nfiles: 3
+    - path: Reports/experiments/xgboost_none/model_registry.json
+      hash: md5
+      md5: c9f753bfbe057cc9e9042e4171bda789
+      size: 239
+    - path: Reports/experiments/xgboost_none/test_metrics.json
+      hash: md5
+      md5: 641038d7f3f4a7164cb91690c80bfa4d
+      size: 283
+  train_lightgbm_smote:
+    cmd: python main.py stage=train model=lightgbm sampler=smote 
+      mlflow.run_name=lightgbm-smote 
+      paths.model=Models/experiments/lightgbm_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/lightgbm_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Models/experiments/lightgbm_smote/model.pkl
+      hash: md5
+      md5: 2f3fc89f16f997590f08dbbbe8d20f04
+      size: 1955620
+    - path: Reports/experiments/lightgbm_smote/cv_metrics.json
+      hash: md5
+      md5: a1fa82f32435f853f4a8fa832e4feeda
+      size: 438
+    - path: Reports/experiments/lightgbm_smote/mlflow_run.json
+      hash: md5
+      md5: ae61bf1318c92cf99339bee56109eeed
+      size: 187
+    - path: Reports/experiments/lightgbm_smote/train_metrics.json
+      hash: md5
+      md5: a682aa947f95f822315b2008a2b8bd18
+      size: 1054
+  evaluate_lightgbm_smote:
+    cmd: python main.py stage=evaluate model=lightgbm sampler=smote 
+      mlflow.run_name=lightgbm-smote 
+      paths.model=Models/experiments/lightgbm_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/lightgbm_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Models/experiments/lightgbm_smote/model.pkl
+      hash: md5
+      md5: 2f3fc89f16f997590f08dbbbe8d20f04
+      size: 1955620
+    - path: Reports/experiments/lightgbm_smote/mlflow_run.json
+      hash: md5
+      md5: ae61bf1318c92cf99339bee56109eeed
+      size: 187
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Reports/experiments/lightgbm_smote/classification_report.json
+      hash: md5
+      md5: ff4154e7e773ba0b233c508c8deb73b1
+      size: 629
+    - path: Reports/experiments/lightgbm_smote/confusion_matrix.json
+      hash: md5
+      md5: ecf363c62cd00d9414e078d54194c2c0
+      size: 98
+    - path: Reports/experiments/lightgbm_smote/figures
+      hash: md5
+      md5: 82875c3aadc58c459f832e0df669149a.dir
+      size: 106238
+      nfiles: 3
+    - path: Reports/experiments/lightgbm_smote/model_registry.json
+      hash: md5
+      md5: 5235b0fcca9707769c11cd17a58ec985
+      size: 216
+    - path: Reports/experiments/lightgbm_smote/test_metrics.json
+      hash: md5
+      md5: 4fb364d8b5931d636cfe02228748975e
+      size: 283
+  train_random_forest_smote:
+    cmd: python main.py stage=train model=random_forest sampler=smote 
+      mlflow.run_name=random-forest-smote 
+      paths.model=Models/experiments/random_forest_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/random_forest_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Models/experiments/random_forest_smote/model.pkl
+      hash: md5
+      md5: 149aa3e5996edab9481c9e2b68de286f
+      size: 50648804
+    - path: Reports/experiments/random_forest_smote/cv_metrics.json
+      hash: md5
+      md5: 50fa777dd808bc12f7e125b1557d13b1
+      size: 437
+    - path: Reports/experiments/random_forest_smote/mlflow_run.json
+      hash: md5
+      md5: 10969a1dd8ebb216ead43194fd5e064c
+      size: 187
+    - path: Reports/experiments/random_forest_smote/train_metrics.json
+      hash: md5
+      md5: e0cbcbc748c2cc002128266997b567df
+      size: 846
+  evaluate_random_forest_smote:
+    cmd: python main.py stage=evaluate model=random_forest sampler=smote 
+      mlflow.run_name=random-forest-smote 
+      paths.model=Models/experiments/random_forest_smote/model.pkl 
+      paths.reports_dir=Reports/experiments/random_forest_smote
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Models/experiments/random_forest_smote/model.pkl
+      hash: md5
+      md5: 149aa3e5996edab9481c9e2b68de286f
+      size: 50648804
+    - path: Reports/experiments/random_forest_smote/mlflow_run.json
+      hash: md5
+      md5: 10969a1dd8ebb216ead43194fd5e064c
+      size: 187
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Reports/experiments/random_forest_smote/classification_report.json
+      hash: md5
+      md5: 7ed16e01356ad5219ccd6f4a2237f29a
+      size: 629
+    - path: Reports/experiments/random_forest_smote/confusion_matrix.json
+      hash: md5
+      md5: f79f26ee1feca0e23e4a3698a1447e8d
+      size: 98
+    - path: Reports/experiments/random_forest_smote/figures
+      hash: md5
+      md5: 37d2a2dfa326d79cc7da4ce36a2546a4.dir
+      size: 102640
+      nfiles: 3
+    - path: Reports/experiments/random_forest_smote/model_registry.json
+      hash: md5
+      md5: f537f8e132614a7b742ea2240b6a3e09
+      size: 239
+    - path: Reports/experiments/random_forest_smote/test_metrics.json
+      hash: md5
+      md5: 6b766064a9a2d3e8a7b3ab3b48a0783a
+      size: 283
+  train_logistic_regression_none:
+    cmd: python main.py stage=train model=logistic_regression sampler=none 
+      mlflow.run_name=logistic-regression-none 
+      paths.model=Models/experiments/logistic_regression_none/model.pkl 
+      paths.reports_dir=Reports/experiments/logistic_regression_none
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/train.csv
+      hash: md5
+      md5: 129be5359c9cb87abe91579cd7b83ce7
+      size: 105174834
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: Models/experiments/logistic_regression_none/model.pkl
+      hash: md5
+      md5: ca349d60cf9ee5735261c871ab4f3d02
+      size: 799955
+    - path: Reports/experiments/logistic_regression_none/cv_metrics.json
+      hash: md5
+      md5: 8b84d8432c7aecaea2dce986ebeb6572
+      size: 440
+    - path: Reports/experiments/logistic_regression_none/mlflow_run.json
+      hash: md5
+      md5: 13d5338507deda5b5d3ef9a2f88e566b
+      size: 187
+    - path: Reports/experiments/logistic_regression_none/train_metrics.json
+      hash: md5
+      md5: 18a29452a4d2919c7a004e14550136ca
+      size: 1138
+  evaluate_logistic_regression_none:
+    cmd: python main.py stage=evaluate model=logistic_regression sampler=none 
+      mlflow.run_name=logistic-regression-none 
+      paths.model=Models/experiments/logistic_regression_none/model.pkl 
+      paths.reports_dir=Reports/experiments/logistic_regression_none
+    deps:
+    - path: Config
+      hash: md5
+      md5: b52d66b1fb6b95be825c11df1770832d.dir
+      size: 4346
+      nfiles: 17
+    - path: Data/intermediate/test.csv
+      hash: md5
+      md5: 03de195ac2b34a8b2c4d33c68abf1aad
+      size: 45073662
+    - path: Models/experiments/logistic_regression_none/model.pkl
+      hash: md5
+      md5: ca349d60cf9ee5735261c871ab4f3d02
+      size: 799955
+    - path: Reports/experiments/logistic_regression_none/mlflow_run.json
+      hash: md5
+      md5: 13d5338507deda5b5d3ef9a2f88e566b
+      size: 187
+    - path: Src/credit_fraud
+      hash: md5
+      md5: 0172e23f9f466c31691b2761d0cc5bbb.dir
+      size: 30092
+      nfiles: 10
+    - path: main.py
+      hash: md5
+      md5: 57ef884c05cfc35fe1e38aee277059fd
+      size: 569
+    outs:
+    - path: 
+        Reports/experiments/logistic_regression_none/classification_report.json
+      hash: md5
+      md5: 584ac8e5bd3c6406db287dcad33c42b5
+      size: 628
+    - path: Reports/experiments/logistic_regression_none/confusion_matrix.json
+      hash: md5
+      md5: c174f833771924fed0cb7bff70803d7f
+      size: 100
+    - path: Reports/experiments/logistic_regression_none/figures
+      hash: md5
+      md5: 6e8f13def517d4e3b431a93db19e6c7c.dir
+      size: 106410
+      nfiles: 3
+    - path: Reports/experiments/logistic_regression_none/model_registry.json
+      hash: md5
+      md5: 59840e6a0f472e5d409734f70741517e
+      size: 216
+    - path: Reports/experiments/logistic_regression_none/test_metrics.json
+      hash: md5
+      md5: ef06b4ea8f570926dbc5f35a83df0a66
+      size: 284
